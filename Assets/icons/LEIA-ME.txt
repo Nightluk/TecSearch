@@ -1,0 +1,16 @@
+TecSearch — pacote de logos para site
+
+Arquivos:
+- tecsearch-logo.svg: logo principal para fundos claros.
+- tecsearch-logo-branca.svg: versão branca para fundos escuros.
+- tecsearch-icone.svg: ícone quadrado para app e atalhos.
+- favicon.svg: ícone para a aba do navegador.
+
+Os SVGs são vetoriais e podem ser redimensionados sem perder qualidade.
+
+Exemplos de uso em HTML:
+<img src="assets/tecsearch-logo.svg" alt="TecSearch">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+Coloque os arquivos em uma pasta "assets" no projeto.
+Cores principais: azul #087CF0, azul-marinho #14243A e branco.
