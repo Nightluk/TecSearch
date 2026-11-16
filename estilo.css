@@ -1,0 +1,8 @@
+@font-face {
+            font-family: 'AlanSans';
+            src: url('fonts/AlanSans-VariableFont_wght.ttf') format('truetype');
+            font-weight: 100 900; 
+        }
+        body {
+            font-family: 'AlanSans', sans-serif !important;
+        }
