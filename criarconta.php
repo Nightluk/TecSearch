@@ -1,58 +1,85 @@
-<!doctype html>
-<html lang="pt-BR">
+<?php
+require __DIR__ . '/inc/bootstrap.php';
+require __DIR__ . '/inc/funcoes.php';
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>MyOwnBills - Criar Conta</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="estilo.css">
-</head>
+if (usuario()) redirect('index.php');
 
-<body class="d-flex align-items-center py-4 bg-body-tertiary vh-100">
+$erros = [];
+$d = ['nome' => '', 'email' => '', 'telefone' => ''];
+$next = $_POST['next'] ?? $_GET['next'] ?? '';
 
-    <main class="form-signin w-100 m-auto" style="max-width: 380px;">
-        <form>
-            <div class="d-flex align-items-center mb-2">
-                <img class="me-3" src="Assets/icons/tecsearch-logo.svg" alt="Logo" width="300" height="70">
-            </div>
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_validar();
+    $d['nome'] = trim($_POST['nome'] ?? '');
+    $d['email'] = mb_strtolower(trim($_POST['email'] ?? ''));
+    $d['telefone'] = so_digitos($_POST['telefone'] ?? '');
+    $senha = (string) ($_POST['senha'] ?? '');
+    $conf = (string) ($_POST['confirmar'] ?? '');
 
-            <h2 class="h6 mb-3 text-body-secondary fw-normal">Preencha os dados para criar a sua conta:</h2>
+    if (mb_strlen($d['nome']) < 3 || mb_strlen($d['nome']) > 100) $erros[] = 'Informe seu nome completo.';
+    if (!filter_var($d['email'], FILTER_VALIDATE_EMAIL)) $erros[] = 'E-mail inválido.';
+    if (!preg_match('/^\d{10,11}$/', $d['telefone'])) $erros[] = 'Telefone inválido (use DDD + número).';
+    if (strlen($senha) < 8) $erros[] = 'A senha deve ter pelo menos 8 caracteres.';
+    if ($senha !== $conf) $erros[] = 'As senhas não conferem.';
+    if (empty($_POST['termos'])) $erros[] = 'É preciso aceitar os Termos e Condições.';
+
+    if (!$erros) {
+        $st = db()->prepare('select email = :e as por_email from clientes where email = :e or telefone = :t limit 1');
+        $st->execute([':e' => $d['email'], ':t' => $d['telefone']]);
+        if ($r = $st->fetch()) $erros[] = $r['por_email'] ? 'Já existe uma conta com este e-mail.' : 'Já existe uma conta com este telefone.';
+    }
+    if (!$erros) {
+        try {
+            $st = db()->prepare('insert into clientes (nome, email, senha, telefone) values (:n, :e, :s, :t) returning id');
+            $st->execute([':n' => $d['nome'], ':e' => $d['email'], ':s' => password_hash($senha, PASSWORD_DEFAULT), ':t' => $d['telefone']]);
+            logar((int) $st->fetchColumn());
+            flash('success', 'Conta criada! Bem-vindo(a) ao TecSearch.');
+            redirect(destino_seguro($next));
+        } catch (PDOException $ex) {
+            if ($ex->getCode() !== '23505') throw $ex;
+            $erros[] = 'E-mail ou telefone já cadastrado.';
+        }
+    }
+}
+
+$titulo = 'Criar conta';
+require __DIR__ . '/inc/auth_topo.php';
+?>
+        <form method="post" novalidate>
+            <?= csrf_campo() ?>
+            <input type="hidden" name="next" value="<?= e($next) ?>">
+            <h2 class="h6 mb-3 text-body-secondary fw-normal">Insira seus dados:</h2>
+            <?php foreach ($erros as $er): ?><div class="alert alert-danger py-2 mb-2"><?= e($er) ?></div><?php endforeach; ?>
 
             <div class="form-floating mb-2">
-                <input type="text" class="form-control" id="floatingName" placeholder="Seu Nome">
-                <label for="floatingName">Nome Completo</label>
+                <input type="text" class="form-control" id="nome" name="nome" placeholder="Nome" value="<?= e($d['nome']) ?>" required autocomplete="name">
+                <label for="nome">Nome completo</label>
             </div>
             <div class="form-floating mb-2">
-                <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-                <label for="floatingInput">Endereço de Email</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value="<?= e($d['email']) ?>" required autocomplete="email">
+                <label for="email">E-mail</label>
             </div>
             <div class="form-floating mb-2">
-                <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
-                <label for="floatingPassword">Senha</label>
+                <input type="tel" class="form-control" id="telefone" name="telefone" placeholder="Telefone" value="<?= e($d['telefone']) ?>" required autocomplete="tel">
+                <label for="telefone">Telefone (com DDD)</label>
+            </div>
+            <div class="form-floating mb-2">
+                <input type="password" class="form-control" id="senha" name="senha" placeholder="Senha" required minlength="8" autocomplete="new-password">
+                <label for="senha">Senha (mín. 8 caracteres)</label>
             </div>
             <div class="form-floating mb-3">
-                <input type="password" class="form-control" id="floatingConfirmPassword" placeholder="Confirm Password">
-                <label for="floatingConfirmPassword">Confirmar Senha</label>
+                <input type="password" class="form-control" id="confirmar" name="confirmar" placeholder="Confirmar" required autocomplete="new-password">
+                <label for="confirmar">Confirmar senha</label>
             </div>
 
             <div class="form-check text-start mb-3">
-                <input class="form-check-input" type="checkbox" value="remember-me" id="checkDefault">
-                <label class="form-check-label" for="checkDefault">
-                    Aceita os <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Termos e Condições</a>?
-                </label>
+                <input class="form-check-input" type="checkbox" name="termos" value="1" id="termos">
+                <label class="form-check-label" for="termos">Aceito os <a href="#" target="_blank" rel="noopener">Termos e Condições</a></label>
             </div>
 
-            <button class="btn w-100 py-2 mb-3 text-white" style="background-color: #087cf0;" type="submit">Cadastrar</button>
-
-
+            <button class="btn w-100 py-2 mb-3 ts-btn" type="submit">Fazer cadastro</button>
             <div class="text-center">
-                <a href="entrar.php" class="text-decoration-none text-body-secondary small">Já tem uma conta? Faça login</a>
+                <a href="entrar.php<?= $next ? '?next=' . urlencode($next) : '' ?>" class="text-decoration-none text-body-secondary small">Já tem uma conta? Faça login</a>
             </div>
         </form>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-</body>
-
-</html>
+<?php require __DIR__ . '/inc/auth_rodape.php'; ?>
