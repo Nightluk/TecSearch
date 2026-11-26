@@ -114,7 +114,7 @@ require __DIR__ . '/inc/topo.php';
             </section>
         </div>
 
-        <aside class="col-md-5">
+        <aside class="col-md-5 ts-aside">
             <div class="ts-painel mb-3">
                 <h2 class="h6 fw-bold">Contato</h2>
                 <p class="small mb-2">📍 <?= e($endereco) ?><br><span class="text-body-secondary">CEP <?= e($a['cep']) ?></span></p>
@@ -125,7 +125,7 @@ require __DIR__ . '/inc/topo.php';
                     <?php if ($a['site']): ?>Site: <a target="_blank" rel="noopener" href="<?= e(url_http($a['site']) ?? '#') ?>"><?= e($a['site']) ?></a><?php endif; ?>
                 </div>
             </div>
-            <div class="ts-mapa" style="min-height:260px"><div id="mapa-a" style="position:absolute;inset:0"></div></div>
+            <div class="ts-mapa" style="height:300px"><div id="mapa-a" style="position:absolute;inset:0"></div></div>
             <a class="small d-block mt-2" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=<?= $a['latitude'] ?>,<?= $a['longitude'] ?>">Como chegar →</a>
         </aside>
     </div>

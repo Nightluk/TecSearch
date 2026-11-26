@@ -5,7 +5,7 @@ window.TSMapa = (function () {
     function base(id, centro, zoom) {
         const map = L.map(id).setView(centro || [-14.2, -51.9], zoom || 4);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            maxZoom: 19, referrerPolicy: 'origin', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
         return map;
     }
